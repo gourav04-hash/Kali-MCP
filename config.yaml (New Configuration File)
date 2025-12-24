@@ -1,0 +1,94 @@
+# Kali Security MCP Server Configuration
+
+# Security settings
+security:
+  # Maximum scans per hour per tool (prevents abuse)
+  max_scans_per_hour: 10
+  
+  # Maximum target string length
+  max_target_length: 255
+  
+  # Maximum output length before truncation
+  max_output_length: 10000
+  
+  # Allowed safe commands for run_safe_command tool
+  allowed_commands:
+    - ls
+    - pwd
+    - whoami
+    - id
+    - uname
+    - cat
+    - grep
+    - find
+    - head
+    - tail
+  
+  # Blocked IP ranges (private networks)
+  blocked_ranges:
+    - "10.0.0.0/8"
+    - "172.16.0.0/12"
+    - "192.168.0.0/16"
+    - "127.0.0.0/8"
+    - "169.254.0.0/16"
+  
+  # Allowed nmap options (whitelist)
+  allowed_nmap_options:
+    - "-sV"
+    - "-sC"
+    - "-A"
+    - "-F"
+    - "-p"
+    - "-Pn"
+    - "-T1"
+    - "-T2"
+    - "-T3"
+    - "-T4"
+    - "-T5"
+    - "-v"
+    - "-vv"
+    - "-O"
+    - "--script"
+    - "--top-ports"
+    - "-sU"
+    - "-sT"
+    - "-sS"
+
+# Timeout settings (in seconds)
+timeouts:
+  nmap: 600
+  nikto: 600
+  sqlmap: 600
+  wpscan: 600
+  dirb: 600
+  searchsploit: 60
+  apt_install: 600
+  git_clone: 300
+  default: 300
+
+# Cache settings
+cache:
+  enabled: true
+  directory: "/tmp/scan_cache"
+  ttl: 3600  # Time to live in seconds (1 hour)
+
+# Audit logging
+audit:
+  enabled: true
+  log_file: "/var/log/mcp_audit.log"
+  log_format: "json"  # json or text
+  include_timestamps: true
+
+# Output settings
+output:
+  sanitize: true
+  remove_credentials: true
+  remove_paths: true
+  max_length: 10000
+
+# Resource limits (for docker-compose)
+resources:
+  memory_limit: "2G"
+  memory_reservation: "1G"
+  cpu_limit: "2"
+  cpu_reservation: "1"
