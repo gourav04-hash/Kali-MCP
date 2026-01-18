@@ -18,7 +18,7 @@ This tool is for educational purposes and authorized security testing only. Unau
 - ✅ Follow responsible disclosure practices
 - ❌ **Never** scan unauthorized systems
 
-**Violations can result in criminal prosecution under computer fraud laws (CFAA, Computer Misuse Act, etc.)**
+
 
 ---
 
