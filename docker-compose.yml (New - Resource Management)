@@ -1,0 +1,63 @@
+version: '3.8'
+
+services:
+  kali-security:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: kali-security-mcp-server:latest
+    container_name: kali-security-mcp
+    
+    # Required for network scanning tools
+    privileged: true
+    network_mode: host
+    
+    # Interactive mode for MCP stdio communication
+    stdin_open: true
+    tty: true
+    
+    # Resource limits to prevent abuse
+    deploy:
+      resources:
+        limits:
+          cpus: '2'
+          memory: 2G
+        reservations:
+          cpus: '1'
+          memory: 1G
+    
+    # Environment variables
+    environment:
+      - PYTHONUNBUFFERED=1
+      - NMAP_TIMEOUT=600
+      - NIKTO_TIMEOUT=600
+      - SQLMAP_TIMEOUT=600
+      - DEFAULT_TIMEOUT=300
+    
+    # Volumes for persistent data (optional)
+    volumes:
+      - scan_cache:/tmp/scan_cache
+      - audit_logs:/var/log
+    
+    # Restart policy
+    restart: unless-stopped
+    
+    # Security options
+    security_opt:
+      - no-new-privileges:false  # Set to false because we need root for network tools
+    
+    # Read-only root filesystem (disabled for tool installation)
+    # read_only: false
+    
+    # Logging configuration
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+volumes:
+  scan_cache:
+    driver: local
+  audit_logs:
+    driver: local

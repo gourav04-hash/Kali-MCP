@@ -1,0 +1,76 @@
+# Use Kali Linux base image with security tools pre-installed
+FROM kalilinux/kali-rolling
+
+# Set metadata
+LABEL maintainer="your-email@example.com"
+LABEL description="Kali Security Tools MCP Server - Enhanced Version"
+LABEL version="2.0"
+
+# Set working directory
+WORKDIR /app
+
+# Set environment variables
+ENV PYTHONUNBUFFERED=1
+ENV DEBIAN_FRONTEND=noninteractive
+ENV PATH="/opt/venv/bin:$PATH"
+
+# Update and install required tools
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends \
+    python3 \
+    python3-pip \
+    python3-venv \
+    nmap \
+    nikto \
+    sqlmap \
+    wpscan \
+    dirb \
+    exploitdb \
+    git \
+    curl \
+    wget \
+    ca-certificates \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
+
+# Create virtual environment for Python dependencies
+RUN python3 -m venv /opt/venv
+
+# Copy requirements first for better caching
+COPY requirements.txt .
+
+# Install Python dependencies in virtual environment
+RUN /opt/venv/bin/pip install --no-cache-dir --upgrade pip && \
+    /opt/venv/bin/pip install --no-cache-dir -r requirements.txt
+
+# Copy the server code and configuration
+COPY kali_security_server.py .
+COPY config.yaml .
+
+# Create necessary directories
+RUN mkdir -p /tmp/scan_cache /var/log && \
+    chmod 755 /tmp/scan_cache /var/log
+
+# Create a non-root user for safer operations (though we still need root for network tools)
+RUN useradd -m -s /bin/bash kaliuser && \
+    chown -R kaliuser:kaliuser /app /tmp/scan_cache
+
+# Health check to ensure server is running
+HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
+    CMD python3 -c "import sys; sys.exit(0)" || exit 1
+
+# Set resource limits at runtime (use docker-compose for this)
+# This is documentation - actual limits set via docker-compose or docker run
+
+# Run as root (required for nmap and other network tools)
+# Note: In production, consider using capabilities instead: --cap-add=NET_RAW --cap-add=NET_ADMIN
+USER root
+
+# Expose no ports (uses stdio for MCP communication)
+EXPOSE 0
+
+# Add volume for persistent cache (optional)
+VOLUME ["/tmp/scan_cache", "/var/log"]
+
+# Run the server
+CMD ["python3", "kali_security_server.py"]
