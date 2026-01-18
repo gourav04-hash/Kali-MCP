@@ -1,10 +1,11 @@
-# Kali Security MCP Server for Claude Desktop
+# Kali Security MCP Server for Claude Desktop - Enhanced v2.0
 
-A comprehensive Model Context Protocol (MCP) server that integrates Kali Linux security tools with Claude Desktop for educational penetration testing.
+A comprehensive Model Context Protocol (MCP) server that integrates Kali Linux security tools with Claude Desktop for educational penetration testing, now with enhanced security features.
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Docker](https://img.shields.io/badge/Docker-Required-blue.svg)](https://www.docker.com/)
 [![WSL2](https://img.shields.io/badge/WSL2-Required-green.svg)](https://docs.microsoft.com/en-us/windows/wsl/)
+[![Version](https://img.shields.io/badge/Version-2.0-brightgreen.svg)](https://github.com/yourusername/kali-mcp-server)
 
 ## ⚠️ Legal Disclaimer
 
@@ -21,6 +22,33 @@ This tool is for educational purposes and authorized security testing only. Unau
 
 ---
 
+## 🆕 What's New in v2.0
+
+### Security Enhancements
+- ✅ **Input Validation**: Comprehensive validation for all inputs (IP, URLs, options)
+- ✅ **Rate Limiting**: 10 scans per hour per tool to prevent abuse
+- ✅ **Private Network Blocking**: Automatic blocking of private IP ranges
+- ✅ **Audit Logging**: Complete audit trail of all scan activities
+- ✅ **Output Sanitization**: Automatic redaction of credentials and sensitive data
+- ✅ **Options Whitelisting**: Only allowed nmap and tool options can be used
+- ✅ **Result Caching**: 1-hour cache to reduce redundant scans
+
+### New Features
+- 📊 **Scan Statistics**: View usage statistics and remaining quota
+- 🗑️ **Cache Management**: Clear cached results on demand
+- 🔒 **Safe Command Execution**: Replaced dangerous `run_custom_command` with `run_safe_command`
+- ⚙️ **Configuration File**: YAML-based configuration for easy customization
+- 🐳 **Docker Compose**: Better resource management and deployment
+- 📈 **Resource Limits**: CPU and memory limits to prevent system overload
+
+### Improved Tools
+- All tools now have comprehensive error handling
+- Better timeout management with environment variable support
+- Improved output formatting and readability
+- Cache support for faster repeated scans
+
+---
+
 ## Table of Contents
 
 - [Features](#features)
@@ -29,9 +57,9 @@ This tool is for educational purposes and authorized security testing only. Unau
 - [Installation](#installation)
 - [Configuration](#configuration)
 - [Available Tools](#available-tools)
+- [Security Features](#security-features)
 - [Usage Examples](#usage-examples)
 - [Troubleshooting](#troubleshooting)
-- [Architecture](#architecture)
 - [Contributing](#contributing)
 - [License](#license)
 
@@ -40,7 +68,7 @@ This tool is for educational purposes and authorized security testing only. Unau
 ## Features
 
 ### Security Scanning Tools
-- **nmap** - Network port scanning and service detection
+- **nmap** - Network port scanning with version detection
 - **Nikto** - Web server vulnerability scanning
 - **SQLMap** - SQL injection detection and exploitation
 - **WPScan** - WordPress vulnerability scanning
@@ -56,8 +84,18 @@ This tool is for educational purposes and authorized security testing only. Unau
 - **git_clone** - Clone security tool repositories
 - **git_pull** - Update cloned repositories
 
-### Custom Commands
-- **run_custom_command** - Execute arbitrary shell commands (advanced users)
+### System Management
+- **run_safe_command** - Execute whitelisted read-only commands
+- **get_scan_statistics** - View scan usage and quota
+- **clear_cache** - Clear cached scan results
+
+### Security Features
+- **Input Validation** - All inputs validated before execution
+- **Rate Limiting** - Prevent scan abuse (10/hour per tool)
+- **Audit Logging** - Complete activity logs in `/var/log/mcp_audit.log`
+- **Result Caching** - Reduce redundant scans (1-hour TTL)
+- **Private IP Blocking** - Automatic blocking of internal networks
+- **Output Sanitization** - Automatic credential redaction
 
 ---
 
@@ -89,6 +127,9 @@ cd kali-mcp-server
 # 2. Build Docker image (in WSL)
 docker build -t kali-security-mcp-server .
 
+# OR use docker-compose
+docker-compose build
+
 # 3. Configure Claude Desktop (in PowerShell)
 .\setup-windows.ps1
 
@@ -96,6 +137,7 @@ docker build -t kali-security-mcp-server .
 
 # 5. Test in Claude
 "List all available security tools"
+"Show scan statistics"
 ```
 
 ---
@@ -116,144 +158,71 @@ wsl --install
 2. Install with WSL2 backend enabled
 3. Start Docker Desktop
 
-#### Verify Installation
-```powershell
-# PowerShell
-docker --version
-wsl --list --verbose
-```
-
-```bash
-# WSL Terminal
-docker ps
-```
-
-### Step 2: Clone Repository
+### Step 2: Clone and Build
 
 ```bash
 # In WSL terminal
 git clone https://github.com/yourusername/kali-mcp-server.git
 cd kali-mcp-server
-```
 
-### Step 3: Build Docker Image
+# Build with docker-compose (recommended)
+docker-compose build
 
-```bash
-# In WSL terminal (this takes 5-10 minutes)
+# OR build manually
 docker build -t kali-security-mcp-server .
 ```
 
-**Expected Output:**
-```
-[+] Building 300.2s (12/12) FINISHED
- => [internal] load build definition
- => => transferring dockerfile: 1.01kB
- ...
- => exporting to image
-Successfully built abc123def456
-Successfully tagged kali-security-mcp-server:latest
-```
-
-### Step 4: Verify Build
-
-```bash
-# Check image exists
-docker images | grep kali-security
-
-# Test container runs
-docker run --rm -it kali-security-mcp-server python3 -c 'print("Success!")'
-```
-
-### Step 5: Configure Windows
-
-Run the setup script in **Windows PowerShell**:
+### Step 3: Configure Claude Desktop
 
 ```powershell
-# Navigate to cloned directory
+# In PowerShell
 cd C:\path\to\kali-mcp-server
-
-# Run setup script
 .\setup-windows.ps1
 ```
 
-**Or manually create config:**
-
-```powershell
-$configPath = "$env:APPDATA\Claude\claude_desktop_config.json"
-$configContent = @"
-{
-  "mcpServers": {
-    "kali-security": {
-      "command": "wsl",
-      "args": [
-        "docker",
-        "run",
-        "-i",
-        "--rm",
-        "--privileged",
-        "--network=host",
-        "kali-security-mcp-server"
-      ]
-    }
-  }
-}
-"@
-[System.IO.File]::WriteAllText($configPath, $configContent)
+Or manually edit:
+```
+C:\Users\USERNAME\AppData\Roaming\Claude\claude_desktop_config.json
 ```
 
-### Step 6: Restart Claude Desktop
+### Step 4: Restart Claude Desktop
 
-1. **Completely quit** Claude Desktop (check system tray)
-2. Wait 5 seconds
-3. **Restart** Claude Desktop
-4. Look for 🔨 hammer icon at bottom of chat
-
-### Step 7: Verify Installation
-
-In Claude Desktop, ask:
-```
-"What security tools do you have available?"
-```
-
-Expected response should list all available tools.
+Fully quit and restart Claude Desktop. Look for the 🔨 hammer icon.
 
 ---
 
 ## Configuration
 
-### Claude Desktop Config Location
+### config.yaml
 
-**Windows**: `C:\Users\USERNAME\AppData\Roaming\Claude\claude_desktop_config.json`
+The server now uses a YAML configuration file for easy customization:
 
-### Config File Structure
+```yaml
+security:
+  max_scans_per_hour: 10
+  max_target_length: 255
+  blocked_ranges:
+    - "10.0.0.0/8"
+    - "192.168.0.0/16"
 
-```json
-{
-  "mcpServers": {
-    "kali-security": {
-      "command": "wsl",
-      "args": [
-        "docker",
-        "run",
-        "-i",
-        "--rm",
-        "--privileged",
-        "--network=host",
-        "kali-security-mcp-server"
-      ]
-    }
-  }
-}
+timeouts:
+  nmap: 600
+  nikto: 600
+  default: 300
+
+cache:
+  enabled: true
+  ttl: 3600
 ```
 
-### Important Flags
+### Environment Variables
 
-| Flag | Purpose | Required |
-|------|---------|----------|
-| `--privileged` | Network scanning capabilities | Yes |
-| `--network=host` | Direct network access | Yes |
-| `-i` | Interactive mode | Yes |
-| `--rm` | Remove container after exit | Recommended |
+Set these in docker-compose.yml or via docker run:
+
+- `NMAP_TIMEOUT` - Nmap scan timeout (default: 600)
+- `NIKTO_TIMEOUT` - Nikto scan timeout (default: 600)
+- `SQLMAP_TIMEOUT` - SQLMap scan timeout (default: 600)
+- `DEFAULT_TIMEOUT` - Default timeout for other tools (default: 300)
 
 ---
 
@@ -263,448 +232,242 @@ Expected response should list all available tools.
 
 #### nmap_scan
 ```
-"Scan 192.168.1.100 for open ports"
-"Run nmap with -sV -sC options on example.com"
+"Scan scanme.nmap.org for open ports"
 ```
 
-**Parameters:**
-- `target` (required): IP address or domain
-- `options` (optional): nmap flags (default: `-sV -sC`)
+**Features:**
+- Input validation (IP/domain)
+- Option whitelisting
+- Result caching
+- Rate limiting
+- Audit logging
 
 #### quick_recon
 ```
-"Perform quick reconnaissance on 192.168.1.1"
+"Perform quick reconnaissance on scanme.nmap.org"
 ```
 
-**Parameters:**
-- `target` (required): IP address or domain
+Fast reconnaissance with nmap -F.
 
 ### Web Vulnerability Scanning
 
 #### nikto_scan
 ```
-"Scan http://192.168.1.100 with Nikto"
+"Scan http://testphp.vulnweb.com with Nikto"
 ```
-
-**Parameters:**
-- `target` (required): URL
-- `port` (optional): Port number (default: `80`)
 
 #### dirb_scan
 ```
-"Brute force directories on http://example.com"
+"Brute force directories on http://testphp.vulnweb.com"
 ```
-
-**Parameters:**
-- `target` (required): URL
-- `wordlist` (optional): Path to wordlist
 
 #### wpscan_scan
 ```
 "Check http://example.com/wordpress for vulnerabilities"
 ```
 
-**Parameters:**
-- `target` (required): WordPress URL
-- `enumerate` (optional): What to enumerate (default: `p,t,u`)
-
 ### SQL Injection Testing
 
 #### sqlmap_scan
 ```
-"Test http://example.com/page.php?id=1 for SQL injection"
+"Test http://testphp.vulnweb.com/listproducts.php?cat=1 for SQL injection"
 ```
 
-**Parameters:**
-- `target` (required): URL with parameter
-- `data` (optional): POST data
+### System Management
 
-### Exploit Search
-
-#### searchsploit_query
-```
-"Search for Apache 2.4 exploits"
-"Find WordPress 5.0 vulnerabilities"
-```
-
-**Parameters:**
-- `keyword` (required): Search term
-
-### Package Management
-
-#### apt_install
-```
-"Install metasploit-framework"
-"Install burpsuite"
-```
-
-**Parameters:**
-- `package` (required): Package name
-
-#### apt_search
-```
-"Search for wireless hacking tools"
-```
-
-**Parameters:**
-- `keyword` (required): Search term
-
-#### list_installed_tools
-```
-"List all installed security tools"
-```
-
-### Git Operations
-
-#### git_clone
-```
-"Clone https://github.com/danielmiessler/SecLists"
-```
-
-**Parameters:**
-- `repo_url` (required): Git repository URL
-- `destination` (optional): Target directory
-
-#### git_pull
-```
-"Update the repository at /app/SecLists"
-```
-
-**Parameters:**
-- `repo_path` (optional): Repository path (default: `/app`)
-
-### Advanced
-
-#### run_custom_command
+#### run_safe_command
 ```
 "Run: ls -la /usr/share/wordlists"
 ```
 
-**Parameters:**
-- `command` (required): Shell command
+**Allowed commands:** ls, pwd, whoami, id, uname, cat, grep, find, head, tail
 
-**⚠️ Warning**: Use with caution. Can execute any command as root.
+#### get_scan_statistics
+```
+"Show my scan statistics"
+```
+
+View remaining quota and usage.
+
+#### clear_cache
+```
+"Clear all cached results"
+```
+
+---
+
+## Security Features
+
+### 1. Input Validation
+
+All inputs are validated before execution:
+
+```python
+# IP/Domain validation
+target = validate_target("192.168.1.1", "ip")
+
+# URL validation
+target = validate_target("http://example.com", "url")
+```
+
+### 2. Rate Limiting
+
+Maximum 10 scans per hour per tool:
+
+```python
+if not check_rate_limit("nmap"):
+    return "ERROR: Rate limit exceeded"
+```
+
+### 3. Private Network Blocking
+
+Automatic blocking of private IP ranges:
+
+- 10.0.0.0/8
+- 172.16.0.0/12
+- 192.168.0.0/16
+- 127.0.0.0/8
+- 169.254.0.0/16
+
+### 4. Audit Logging
+
+All scan activities logged to `/var/log/mcp_audit.log`:
+
+```json
+{
+  "timestamp": "2025-12-24T10:30:00Z",
+  "tool": "nmap",
+  "target": "scanme.nmap.org",
+  "success": true,
+  "details": "options: -sV -sC"
+}
+```
+
+### 5. Output Sanitization
+
+Automatic redaction of sensitive data:
+
+```python
+output = sanitize_output(output)
+# Redacts: passwords, API keys, tokens, paths
+```
+
+### 6. Result Caching
+
+1-hour cache reduces redundant scans:
+
+```python
+cache_key = get_cache_key("nmap", target, options)
+cached = get_cached_result(cache_key)
+```
 
 ---
 
 ## Usage Examples
 
-### Example 1: Basic Network Scan
+### Example 1: Basic Network Scan with Caching
 
 ```
-User: "I need to scan my local server at 192.168.1.100"
+User: "Scan scanme.nmap.org"
 
-Claude: I'll perform a comprehensive scan of your server.
+Claude: I'll scan scanme.nmap.org for you.
 
-[Executes nmap_scan]
+[First scan - takes 30 seconds]
+Results: [scan output]
 
-Results:
-PORT    STATE SERVICE     VERSION
-22/tcp  open  ssh         OpenSSH 8.2p1
-80/tcp  open  http        Apache 2.4.41
-443/tcp open  https       Apache 2.4.41
-3306/tcp open mysql       MySQL 5.7.33
+User: "Scan scanme.nmap.org again"
 
-Recommendations:
-- SSH is exposed - ensure strong authentication
-- Update Apache (current version has known CVEs)
-- MySQL should not be externally accessible
+Claude: I'll scan scanme.nmap.org for you.
+
+[CACHED RESULT - instant]
+Results: [same output from cache]
 ```
 
-### Example 2: WordPress Security Audit
+### Example 2: Rate Limit Protection
 
 ```
-User: "Audit my WordPress site at http://mysite.local"
+User: [After 10 scans] "Scan another target"
 
-Claude: I'll perform a comprehensive WordPress security scan.
+Claude: ERROR: Rate limit exceeded. Maximum 10 scans per hour.
 
-[Executes wpscan_scan]
-
-Findings:
-✓ WordPress core is up to date (6.4.2)
-⚠ Plugin "contact-form-7" is outdated (v5.5.3)
-⚠ Theme "twentytwenty" has known XSS vulnerability
-✗ XML-RPC is enabled (DoS risk)
-✗ User enumeration possible
-
-Priority Actions:
-1. Update Contact Form 7 to latest version
-2. Update or replace twentytwenty theme
-3. Disable XML-RPC in wp-config.php
-4. Implement user enumeration protection
+You can check your quota with: "Show scan statistics"
 ```
 
-### Example 3: Web Application Testing
+### Example 3: Private Network Protection
 
 ```
-User: "Test my development site for common vulnerabilities"
+User: "Scan 192.168.1.1"
 
-Claude: I'll run a comprehensive vulnerability assessment.
+Claude: ERROR: Target 192.168.1.1 is in blocked range 192.168.0.0/16
 
-[Executes nikto_scan]
-[Executes dirb_scan]
-
-Nikto Results:
-- Server: Apache/2.4.41 (outdated)
-- Found: /admin directory (no authentication)
-- Found: .git directory exposed
-- Missing security headers (X-Frame-Options, CSP)
-
-DIRB Results:
-- /admin (200 OK)
-- /backup (403 Forbidden)
-- /config.php.bak (200 OK)
-- /.git (200 OK)
-
-Critical Issues:
-1. Git repository exposed - full source code accessible
-2. Backup file contains credentials
-3. Admin panel accessible without VPN
-
-Immediate Actions Required:
-1. Remove .git directory from web root
-2. Delete backup files
-3. Restrict admin access by IP
-4. Add security headers
+Private network scanning is not allowed for security reasons.
 ```
 
-### Example 4: Installing Additional Tools
+### Example 4: Safe Command Execution
 
 ```
-User: "I need to install Metasploit"
+User: "Run: ls /usr/share/wordlists"
 
-Claude: I'll install Metasploit Framework for you.
+Claude: [Executes safely]
+[INSTALLED] common.txt
+[INSTALLED] rockyou.txt
 
-[Executes apt_install with "metasploit-framework"]
+User: "Run: rm -rf /"
 
-Installation successful!
+Claude: ERROR: Command 'rm' is not allowed.
 
-Metasploit Framework has been installed. You can now:
-- Search and use exploit modules
-- Perform vulnerability validation
-- Generate payloads
-- Conduct penetration testing
-
-Would you like me to search for a specific exploit?
+Allowed commands: ls, pwd, whoami, id, uname, cat, grep, find, head, tail
 ```
 
-### Example 5: SQL Injection Testing
+### Example 5: Scan Statistics
 
 ```
-User: "Check if this login form is vulnerable: http://testsite.local/login.php"
+User: "Show my scan statistics"
 
-Claude: I'll test for SQL injection vulnerabilities.
+Claude:
+Scan Statistics (Last Hour)
+============================================================
 
-[Executes sqlmap_scan]
+nmap:
+  - Scans used: 3/10
+  - Remaining: 7
 
-⚠ CRITICAL VULNERABILITY FOUND
+nikto:
+  - Scans used: 1/10
+  - Remaining: 9
 
-SQL Injection Details:
-- Parameter: username
-- Injection Type: Boolean-based blind
-- Database: MySQL 5.7.33
-- Risk: HIGH - Full database access possible
-
-The application is vulnerable to SQL injection. An attacker can:
-- Extract all database contents
-- Modify/delete data
-- Potentially execute system commands
-
-Required Fixes:
-1. Use parameterized queries/prepared statements
-2. Implement input validation
-3. Apply principle of least privilege to DB user
-4. Add Web Application Firewall (WAF)
-5. Enable query logging for forensics
-
-Sample secure code:
-```php
-// INSECURE (current)
-$query = "SELECT * FROM users WHERE username='$_POST[username]'";
-
-// SECURE (recommended)
-$stmt = $pdo->prepare("SELECT * FROM users WHERE username = ?");
-$stmt->execute([$_POST['username']]);
-```
+Total scans: 4
+Rate Limit: 10 scans per hour per tool
 ```
 
 ---
 
 ## Troubleshooting
 
-### Issue 1: Claude Desktop Crashes on Startup
+### Issue: "Rate limit exceeded"
 
-**Symptoms**: Application closes immediately after opening
-
-**Cause**: Invalid JSON or BOM (Byte Order Mark) in config file
-
-**Solution**:
-```powershell
-# Delete and recreate config
-Remove-Item "$env:APPDATA\Claude\claude_desktop_config.json" -Force
-
-# Use WriteAllText (NOT Out-File)
-$configPath = "$env:APPDATA\Claude\claude_desktop_config.json"
-$configContent = '{"mcpServers":{"kali-security":{"command":"wsl","args":["docker","run","-i","--rm","--privileged","--network=host","kali-security-mcp-server"]}}}'
-[System.IO.File]::WriteAllText($configPath, $configContent)
+**Solution**: Wait one hour or clear old scans:
+```
+docker restart kali-security-mcp
 ```
 
-**Check logs**:
-```powershell
-Get-Content "$env:APPDATA\Claude\logs\main.log" -Tail 50
+### Issue: "Target is in blocked range"
+
+**Solution**: Only scan public IP addresses or use authorized domains like `scanme.nmap.org` or `testphp.vulnweb.com`.
+
+### Issue: Cache showing old results
+
+**Solution**: Clear cache:
+```
+"Clear all cached results"
 ```
 
----
+### Issue: Audit log filling up disk
 
-### Issue 2: "Operation not permitted" Error
-
-**Symptoms**: nmap scans fail with permission errors
-
-**Cause**: Container lacks required capabilities
-
-**Solution 1**: Verify `--privileged` flag
-```powershell
-Get-Content "$env:APPDATA\Claude\claude_desktop_config.json"
-```
-
-Must include: `"--privileged"` and `"--network=host"`
-
-**Solution 2**: Test manually
+**Solution**: Rotate logs:
 ```bash
-# In WSL - should work
-docker run --rm -it --privileged --network=host kali-security-mcp-server nmap -F scanme.nmap.org
-```
-
-**Solution 3**: Check for conflicts
-Ensure no other MCP server entries (like `MCP_DOCKER`) conflict with `kali-security`
-
----
-
-### Issue 3: MCP Server Not Visible
-
-**Symptoms**: No hammer icon 🔨 in Claude Desktop
-
-**Cause**: Config file not found or invalid
-
-**Diagnostics**:
-```powershell
-# Verify file exists
-Test-Path "$env:APPDATA\Claude\claude_desktop_config.json"
-
-# Validate JSON
-Get-Content "$env:APPDATA\Claude\claude_desktop_config.json" | ConvertFrom-Json
-
-# Check logs
-Get-Content "$env:APPDATA\Claude\logs\main.log" -Tail 100
-```
-
-**Look for**:
-- ✅ `"Launching MCP Server: kali-security"`
-- ❌ `"Error reading or parsing config file"`
-
----
-
-### Issue 4: Docker Build Fails
-
-**Error**: `unknown instruction: ```  `
-
-**Cause**: Markdown code fences in Dockerfile
-
-**Solution**: Ensure Dockerfile starts with `# Use Kali Linux...` (no backticks)
-
----
-
-### Issue 5: WSL Can't Access Docker
-
-**Symptoms**: `docker: command not found` in WSL
-
-**Solution**:
-1. Open Docker Desktop
-2. Settings → Resources → WSL Integration
-3. Enable integration with your WSL distro
-4. Apply & Restart
-
-**Verify**:
-```bash
-docker ps
-```
-
----
-
-### Issue 6: Python Syntax Errors
-
-**Error**: `SyntaxError: invalid character '⚠'`
-
-**Cause**: Emoji characters in Python code
-
-**Solution**: 
-1. Edit `kali_security_server.py`
-2. Replace emojis with plain text:
-   - `"WARNING: ..."` instead of `"⚠️ WARNING: ..."`
-   - `"Success"` instead of `"✅ Success"`
-3. Rebuild: `docker build -t kali-security-mcp-server .`
-
----
-
-### Debug Checklist
-
-Run through this checklist when troubleshooting:
-
-- [ ] Docker Desktop is running
-- [ ] WSL2 integration enabled
-- [ ] Image exists: `docker images | grep kali-security`
-- [ ] Config exists: `Test-Path "$env:APPDATA\Claude\claude_desktop_config.json"`
-- [ ] JSON is valid: `Get-Content ... | ConvertFrom-Json`
-- [ ] No BOM in config (check for `ï»¿` in logs)
-- [ ] `--privileged` flag present
-- [ ] Claude Desktop fully restarted (not just window closed)
-- [ ] Container runs manually: `docker run --rm -it --privileged kali-security-mcp-server`
-- [ ] No conflicting MCP servers in config
-- [ ] Firewall/Antivirus not blocking Docker
-
----
-
-## Architecture
-
-```
-┌─────────────────────────────────────────────────────────┐
-│                    Windows System                        │
-│  ┌───────────────────────────────────────────────────┐  │
-│  │         Claude Desktop (Windows App)              │  │
-│  │                                                   │  │
-│  │  Reads: claude_desktop_config.json               │  │
-│  └───────────────────┬───────────────────────────────┘  │
-│                      │                                   │
-│                      │ Executes via WSL                  │
-│                      ▼                                   │
-│  ┌───────────────────────────────────────────────────┐  │
-│  │           WSL2 (Linux Subsystem)                  │  │
-│  │  ┌─────────────────────────────────────────────┐ │  │
-│  │  │      Docker Container (Privileged)          │ │  │
-│  │  │  ┌───────────────────────────────────────┐ │ │  │
-│  │  │  │  Kali Linux Base                      │ │ │  │
-│  │  │  │  ├─ Python 3.11                       │ │ │  │
-│  │  │  │  ├─ FastMCP Server                    │ │ │  │
-│  │  │  │  ├─ Security Tools                    │ │ │  │
-│  │  │  │  │  ├─ nmap                           │ │ │  │
-│  │  │  │  │  ├─ nikto                          │ │ │  │
-│  │  │  │  │  ├─ sqlmap                         │ │ │  │
-│  │  │  │  │  ├─ wpscan                         │ │ │  │
-│  │  │  │  │  └─ dirb                           │ │ │  │
-│  │  │  │  ├─ Package Manager (apt)             │ │ │  │
-│  │  │  │  └─ Git                               │ │ │  │
-│  │  │  └───────────────────────────────────────┘ │ │  │
-│  │  └─────────────────────────────────────────────┘ │  │
-│  └───────────────────────────────────────────────────┘  │
-└─────────────────────────────────────────────────────────┘
-
-Communication Flow:
-1. Claude Desktop → Reads config file
-2. Claude Desktop → Launches WSL command
-3. WSL → Starts Docker container with privileges
-4. Container → Runs Python MCP server
-5. MCP Server ← → Claude via stdio (JSON-RPC)
-6. Security Tools ← → Network (with elevated privileges)
+# In WSL
+docker exec kali-security-mcp truncate -s 0 /var/log/mcp_audit.log
 ```
 
 ---
@@ -713,9 +476,11 @@ Communication Flow:
 
 ```
 kali-mcp-server/
-├── Dockerfile                    # Container definition
+├── Dockerfile                    # Enhanced container definition
+├── docker-compose.yml            # Resource management (NEW)
 ├── requirements.txt              # Python dependencies
-├── kali_security_server.py       # Main MCP server code
+├── config.yaml                   # Configuration file (NEW)
+├── kali_security_server.py       # Enhanced MCP server
 ├── setup-windows.ps1             # Windows setup script
 ├── README.md                     # This file
 ├── LICENSE                       # MIT License
@@ -724,26 +489,44 @@ kali-mcp-server/
 
 ---
 
+## Changelog
+
+### v2.0.0 (2025-12-24)
+- ✅ Added comprehensive input validation
+- ✅ Implemented rate limiting (10/hour per tool)
+- ✅ Added private network blocking
+- ✅ Implemented audit logging
+- ✅ Added output sanitization
+- ✅ Implemented result caching
+- ✅ Added options whitelisting
+- ✅ Replaced `run_custom_command` with `run_safe_command`
+- ✅ Added `get_scan_statistics` tool
+- ✅ Added `clear_cache` tool
+- ✅ Created docker-compose.yml for resource management
+- ✅ Created config.yaml for configuration
+- ✅ Added comprehensive error handling
+- ✅ Improved logging and debugging
+
+### v1.0.0 (2025-12-19)
+- Initial release
+
+---
+
 ## Security Best Practices
 
-### Container Security
-- ✅ Runs as root (required for security tools)
-- ✅ Isolated from host (Docker container)
-- ✅ No persistent storage (data lost on restart)
-- ⚠️ Privileged mode (necessary for network access)
+### For Users
+1. Only scan authorized targets
+2. Monitor your scan statistics
+3. Clear cache regularly
+4. Review audit logs
+5. Don't bypass rate limits
 
-### Usage Guidelines
-1. **Authorization**: Always get written permission
-2. **Scope**: Stay within agreed boundaries
-3. **Documentation**: Keep logs of all activities
-4. **Disclosure**: Report findings responsibly
-5. **Education**: Use for learning, not malicious purposes
-
-### Legal Compliance
-- Computer Fraud and Abuse Act (CFAA) - USA
-- Computer Misuse Act - UK
-- Similar laws exist worldwide
-- Penalties include fines and imprisonment
+### For Developers
+1. Never disable input validation
+2. Keep audit logs secure
+3. Monitor resource usage
+4. Update blocked ranges as needed
+5. Review security logs regularly
 
 ---
 
@@ -752,82 +535,43 @@ kali-mcp-server/
 Contributions welcome! Please:
 
 1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit changes (`git commit -m 'Add amazing feature'`)
-4. Push to branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
-
-### Development Guidelines
-- Follow Python PEP 8 style guide
-- Add docstrings to all functions
-- Test all changes in isolated environment
-- Update README with new features
+2. Create a feature branch
+3. Add tests for new features
+4. Ensure security checks pass
+5. Update documentation
+6. Submit pull request
 
 ---
 
 ## License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+MIT License - see [LICENSE](LICENSE) file
 
 ---
 
 ## Acknowledgments
 
-- [Anthropic](https://www.anthropic.com/) - Claude and MCP protocol
-- [Kali Linux](https://www.kali.org/) - Security tool distribution
-- [FastMCP](https://github.com/jlowin/fastmcp) - MCP server framework
-- Security community - Tool developers
+- [Anthropic](https://www.anthropic.com/) - Claude and MCP
+- [Kali Linux](https://www.kali.org/) - Security tools
+- [FastMCP](https://github.com/jlowin/fastmcp) - MCP framework
+- Security community
 
 ---
 
 ## Support
 
+### Test Targets (Legal to Scan)
+- **scanme.nmap.org** - Official nmap test server
+- **testphp.vulnweb.com** - OWASP test application
+- **demo.testfire.net** - IBM test application
+
 ### Resources
 - [MCP Documentation](https://modelcontextprotocol.io/)
-- [Docker Documentation](https://docs.docker.com/)
-- [Kali Linux Tools](https://www.kali.org/tools/)
-- [WSL Documentation](https://learn.microsoft.com/en-us/windows/wsl/)
-
-### Practice Platforms
-- [HackTheBox](https://www.hackthebox.com/)
-- [TryHackMe](https://tryhackme.com/)
-- [OverTheWire](https://overthewire.org/)
-- [PentesterLab](https://pentesterlab.com/)
-
-### Getting Help
-- Check [Issues](https://github.com/yourusername/kali-mcp-server/issues) for common problems
-- Review [Troubleshooting](#troubleshooting) section
-- Check Claude Desktop logs
-- Test container manually in WSL
-
----
-
-## Changelog
-
-### v1.0.0 (2025-12-19)
-- Initial release
-- Core security scanning tools (nmap, nikto, sqlmap, wpscan, dirb)
-- Package management (apt install/search)
-- Git integration (clone/pull)
-- Custom command execution
-- Windows/WSL/Docker setup automation
-
----
-
-## Roadmap
-
-### Planned Features
-- [ ] Metasploit integration
-- [ ] Burp Suite proxy configuration
-- [ ] Report generation (PDF/HTML)
-- [ ] Automated vulnerability scoring
-- [ ] Integration with vulnerability databases
-- [ ] Web UI for configuration
-- [ ] macOS and Linux support
-- [ ] Persistent storage option
+- [OWASP Testing Guide](https://owasp.org/www-project-web-security-testing-guide/)
+- [Kali Linux Docs](https://www.kali.org/docs/)
 
 ---
 
 **Made with ❤️ for ethical hackers and security researchers**
 
-**Remember: With great power comes great responsibility. Use wisely and legally.**
+**v2.0 - Enhanced Security Edition**
